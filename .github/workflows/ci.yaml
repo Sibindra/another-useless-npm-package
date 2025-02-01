@@ -73,6 +73,10 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v4
+      - name: Set up NPM for publishing
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PAT }}" >> .npmrc
+          npm config set //registry.npmjs.org/:_authToken="${{ secrets.NPM_PAT }}"
       - name: Publish to npm
         run: npm publish --access public
         env:
