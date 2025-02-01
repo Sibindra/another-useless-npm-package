@@ -8,7 +8,7 @@ on:
     branches:
       - main
   release:
-    types: [published]
+    types: [ published ]
 
 jobs:
   test:
@@ -48,8 +48,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-    outputs:
-      new_version: ${{ steps.version-bump.outputs.new_version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,10 +60,16 @@ jobs:
         id: version-bump
         run: |
           npx standard-version --release-as minor
-      - name: Create and Publish Release
+          VERSION=$(jq -r .version package.json)
+          echo "new_version=$VERSION" >> $GITHUB_ENV
+      - name: Push changes
+        run: |
+          git push origin main --tags
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.version-bump.outputs.new_version }}
+          tag_name: ${{ env.new_version }}
+          generated_notes: true
 
   publish:
     name: Publish to npm and GitHub Packages
@@ -73,17 +77,23 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v4
-      - name: Set up NPM for publishing
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - name: Configure npm for multi-registry publishing
         run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PAT }}" >> .npmrc
-          npm config set //registry.npmjs.org/:_authToken="${{ secrets.NPM_PAT }}"
+          mkdir -p ~/.npm-global
+          npm config set prefix=~/.npm-global
+          echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> ~/.npmrc
+          echo "prefix=~/.npm-global" >> ~/.npmrc
       - name: Publish to npm
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PAT }}
       - name: Publish to GitHub Packages
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PAT }}" >> .npmrc
-          npm publish
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_PAT }}
