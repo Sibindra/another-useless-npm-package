@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/Sibindra/another-useless-npm-package/compare/v1.2.0...v1.3.0) (2025-02-01)
+
+
+### Bug Fixes
+
+* removed prepublish scripts ([1701d31](https://github.com/Sibindra/another-useless-npm-package/commit/1701d316d1e17a40b4e82c431b0a6be928e325f4))
+
 ## [1.2.0](https://github.com/Sibindra/another-useless-npm-package/compare/v1.1.0...v1.2.0) (2025-02-01)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "another-useless-npm-package",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Testing tags autobump , semantic release and CI for building libraries in ts.",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
