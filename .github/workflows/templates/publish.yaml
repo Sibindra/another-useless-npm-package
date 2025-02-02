@@ -3,7 +3,7 @@ name: Publish to npm and GitHub Packages
 runs-on: ubuntu-latest
 
 steps:
-  - uses: actions/checkout@v4
+  - uses: ./.github/workflows/templates/setup-node.yaml
   - name: Set up NPM for publishing
     run: |
       echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PAT }}" >> .npmrc

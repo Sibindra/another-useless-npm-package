@@ -1,4 +1,4 @@
-name: Run Tests
+name: Setup Node.js
 
 runs-on: ubuntu-latest
 
@@ -9,5 +9,3 @@ steps:
     with:
       node-version: 20
       cache: "npm"
-  - run: npm ci
-  - run: npm test

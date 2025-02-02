@@ -1,0 +1,8 @@
+name: Run Tests
+
+runs-on: ubuntu-latest
+
+steps:
+  - uses: ./.github/workflows/templates/setup-node.yaml
+  - run: npm ci
+  - run: npm test

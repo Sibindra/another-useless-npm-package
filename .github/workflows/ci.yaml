@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Build and release
 
 on:
   push:
@@ -12,16 +12,16 @@ on:
 
 jobs:
   test:
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/templates/test.yaml
 
   build:
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/templates/build.yaml
     needs: test
 
   release:
-    uses: ./.github/workflows/release.yml
+    uses: ./.github/workflows/templates/release.yaml
     needs: build
 
   publish:
-    uses: ./.github/workflows/publish.yml
+    uses: ./.github/workflows/templates/publish.yaml
     needs: release
