@@ -71,24 +71,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Config git author
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "github-actions@github.com"
       - name: Fetch remote tags
         run: git fetch --tags
       - name: Get latest remote tag
         id: latest-tag
         run: |
-          latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          # Attempt to get the latest remote tag
+          latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1) || echo "no-tags-found")
           echo "Latest remote tag: $latest_tag"
           echo "latest_tag=$latest_tag" >> $GITHUB_ENV
-      - name: Bump version and tag
-        id: version-bump
+
+      - name: Create v1.0.0 tag if no tags exist
         run: |
-          VERSION=${{ env.latest_tag }}
-          npx standard-version --release-as minor
-          echo "new_version=$VERSION" >> $GITHUB_ENV
+          if [ "${{ env.latest_tag }}" == "no-tags-found" ]; then
+            echo "No tags found, creating v1.0.0"
+            git tag v1.0.0
+            git push origin v1.0.0
+            echo "new_version=v1.0.0" >> $GITHUB_ENV
+          else
+            echo "Using existing tag: ${{ env.latest_tag }}"
+            echo "new_version=${{ env.latest_tag }}" >> $GITHUB_ENV
+          fi
+
       - name: Push changes
         run: |
           git pull --rebase origin main
@@ -96,11 +100,11 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.latest_tag }}
+          tag_name: ${{ env.new_version }}
           generated_notes: true
       - name: Delete Local Tags
         run: |
-          git tag -d ${{ env.latest_tag }}
+          git tag -d ${{ env.new_version }}
 
   publish:
     name: Publish to npm and GitHub Packages
