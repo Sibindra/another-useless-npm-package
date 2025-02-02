@@ -1,4 +1,4 @@
-name: Build and publish to npm and github
+name: CI/CD Pipeline
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches:
       - main
   release:
-    types: [published]
+    types: [ published ]
 
 env:
   NODE_VERSION: "20"
@@ -75,11 +75,19 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "github-actions@github.com"
+      - name: Fetch remote tags
+        run: git fetch --tags
+      - name: Get latest remote tag
+        id: latest-tag
+        run: |
+          latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "Latest remote tag: $latest_tag"
+          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
       - name: Bump version and tag
         id: version-bump
         run: |
+          VERSION=${{ env.latest_tag }}
           npx standard-version --release-as minor
-          VERSION=$(jq -r .version package.json)
           echo "new_version=$VERSION" >> $GITHUB_ENV
       - name: Push changes
         run: |
@@ -88,8 +96,11 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.new_version }}
+          tag_name: ${{ env.latest_tag }}
           generated_notes: true
+      - name: Delete Local Tags
+        run: |
+          git tag -d ${{ env.latest_tag }}
 
   publish:
     name: Publish to npm and GitHub Packages
