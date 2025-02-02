@@ -1,0 +1,30 @@
+name: Create Release
+
+runs-on: ubuntu-latest
+permissions:
+  contents: write
+  packages: write
+
+steps:
+  - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+  - name: Config git author
+    run: |
+      git config user.name "GitHub Actions"
+      git config user.email "github-actions@github.com"
+  - name: Bump version and tag
+    id: version-bump
+    run: |
+      npx standard-version --release-as minor
+      VERSION=$(jq -r .version package.json)
+      echo "new_version=$VERSION" >> $GITHUB_ENV
+  - name: Push changes
+    run: |
+      git pull --rebase origin main
+      git push origin main --tags
+  - name: Create Release
+    uses: softprops/action-gh-release@v1
+    with:
+      tag_name: ${{ env.new_version }}
+      generated_notes: true

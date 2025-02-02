@@ -12,84 +12,16 @@ on:
 
 jobs:
   test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "npm"
-      - run: npm ci
-      - run: npm test
+    uses: ./.github/workflows/test.yml
 
   build:
-    name: Build Package
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/build.yml
     needs: test
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: dist/
 
   release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-    outputs:
-      new_version: ${{ steps.version-bump.outputs.new_version }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Config git author
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "github-actions@github.com"
-      - name: Bump version and tag
-        id: version-bump
-        run: |
-          npx standard-version --release-as minor
-          VERSION=$(jq -r .version package.json)
-          echo "new_version=$VERSION" >> $GITHUB_ENV
-      - name: Push changes
-        run: |
-          git push origin main --tags
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.new_version }}
-          generated_notes: true
+    uses: ./.github/workflows/release.yml
+    needs: build
 
   publish:
-    name: Publish to npm and GitHub Packages
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/publish.yml
     needs: release
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up NPM for publishing
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PAT }}" >> .npmrc
-          npm config set //registry.npmjs.org/:_authToken="${{ secrets.NPM_PAT }}"
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PAT }}
-      - name: Publish to GitHub Packages
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_PAT }}" >> .npmrc
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_PAT }}
